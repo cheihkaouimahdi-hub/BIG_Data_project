@@ -1,0 +1,9 @@
+requests
+feedparser
+pandas
+neo4j==5.18.0
+python-dotenv
+networkx
+matplotlib
+tqdm
+loguru
