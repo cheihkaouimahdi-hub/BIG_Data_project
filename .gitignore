@@ -427,3 +427,11 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+env/
+venv/
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+target/
+build/
