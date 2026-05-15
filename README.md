@@ -5,12 +5,13 @@
 ## Architecture
 
 ```
-arXiv API → Python ETL → Neo4j AuraDB (Cloud) → Visualizations (PNG)
+arXiv API & Semantic Scholar API → Python ETL → Neo4j AuraDB (Cloud) → Visualizations (PNG)
 ```
 
 ```mermaid
 graph LR
     A[arXiv API] -->|feedparser| B[Extraction]
+    S[Semantic Scholar API] -->|requests| B
     B -->|JSON| C[Nettoyage]
     C -->|JSON| D[Chargement Neo4j]
     D -->|Cypher| E[Visualisations]
@@ -127,7 +128,7 @@ Les fichiers sont sauvegardés dans `./visualizations/` :
 
 ## Requêtes Cypher Disponibles
 
-Voir [`graph/queries.cypher`](graph/queries.cypher) pour les 8 requêtes d'analyse :
+Voir [`graph/queries.cypher`](graph/queries.cypher) pour les 10 requêtes d'analyse :
 
 1. Top 10 auteurs les plus prolifiques
 2. Top 10 articles les plus cités
@@ -137,10 +138,14 @@ Voir [`graph/queries.cypher`](graph/queries.cypher) pour les 8 requêtes d'analy
 6. Distribution des articles par sujet
 7. Auteurs interdisciplinaires (3+ sujets)
 8. Année la plus productive
+9. **[BONUS] Système de recommandation** (Collaborative Filtering)
+10. **[BONUS] Détection de communauté de chercheurs** (Algorithme Louvain via Neo4j GDS)
 
-## Contraintes Techniques
+## Contraintes & Fonctionnalités Implémentées
 
-- ❌ Pas de Semantic Scholar — **arXiv uniquement**
+- ✅ Extraction combinée : **arXiv** (articles) + **Semantic Scholar** (réseau de citations)
+- ✅ Implémentation du bonus **Système de recommandation** (Requête 9)
+- ✅ Implémentation du bonus **Détection de communauté** (Requête 10 - nécessite GDS)
 - ❌ Pas de Neo4j local — **AuraDB cloud URI uniquement**
 - ❌ Pas de credentials en dur — toujours depuis `.env`
 - ✅ Tout fonctionne via `docker-compose up`

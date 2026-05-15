@@ -17,6 +17,7 @@ from loguru import logger
 
 import config
 from extraction.arxiv_extractor import fetch_arxiv
+from extraction.semantic_scholar_extractor import fetch_citations_for_articles
 from cleaning.cleaner import load_raw, clean_articles, save_clean
 from graph.neo4j_connector import Neo4jConnector
 from graph.loader import GraphLoader
@@ -54,7 +55,12 @@ def main():
     if step in ("extract", "all"):
         logger.info("═══════════ STEP 1: EXTRACTION ═══════════")
         raw_data = fetch_arxiv(config.SEARCH_KEYWORDS, config.MAX_RESULTS)
-        logger.info(f"Extraction complete — {len(raw_data)} articles.")
+        logger.info(f"arXiv Extraction complete — {len(raw_data)} articles.")
+        
+        # Extract Citations
+        arxiv_ids = [article["arxiv_id"] for article in raw_data if "arxiv_id" in article]
+        citations_data = fetch_citations_for_articles(arxiv_ids)
+        logger.info(f"Semantic Scholar Extraction complete — citations for {len(citations_data)} articles.")
 
     # ── STEP 2: Clean ─────────────────────────────────────────────────────────
     if step in ("clean", "all"):
@@ -69,7 +75,15 @@ def main():
         with Neo4jConnector() as conn:
             loader = GraphLoader(conn)
             clean_data = load_raw(config.DATA_CLEAN_PATH)
-            loader.load_all(clean_data)
+            
+            # Load citations safely if they exist
+            try:
+                citations_data = load_raw(config.DATA_CITATIONS_PATH)
+            except (FileNotFoundError, IOError):
+                logger.warning("Citations file not found, loading graph without citations.")
+                citations_data = []
+                
+            loader.load_all(clean_data, citations_data)
 
     # ── STEP 4: Visualize ─────────────────────────────────────────────────────
     if step in ("visualize", "all"):

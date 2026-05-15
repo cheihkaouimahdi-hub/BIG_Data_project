@@ -24,4 +24,5 @@ MAX_RESULTS = int(os.getenv("MAX_RESULTS", "300"))
 # ── File Paths ────────────────────────────────────────────────────────────────
 DATA_RAW_PATH = "data/raw/arxiv_raw.json"
 DATA_CLEAN_PATH = "data/cleaned/articles_clean.json"
+DATA_CITATIONS_PATH = "data/raw/citations.json"
 VISUALIZATION_PATH = "visualizations/"

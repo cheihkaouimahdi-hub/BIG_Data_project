@@ -77,3 +77,34 @@ MATCH (a:Article)
 RETURN a.year AS year, COUNT(a) AS article_count
 ORDER BY article_count DESC
 LIMIT 1;
+
+
+// --------------------------------------------------------------------------
+// 9. [BONUS] Système de recommandation (Collaborative Filtering)
+//    Recommander des articles similaires (lus/cités par les co-auteurs)
+// --------------------------------------------------------------------------
+MATCH (au:Author {name: "Yann Lecun"})-[:WROTE]->(a1:Article)<-[:WROTE]-(coauthor:Author)
+MATCH (coauthor)-[:WROTE]->(rec:Article)
+WHERE NOT (au)-[:WROTE]->(rec)
+RETURN rec.title AS recommended_article, COUNT(DISTINCT coauthor) AS recommendation_strength, rec.year AS year
+ORDER BY recommendation_strength DESC, year DESC
+LIMIT 10;
+
+
+// --------------------------------------------------------------------------
+// 10. [BONUS] Détection de communauté de chercheurs (Nécessite Neo4j GDS)
+//    Utilisation de l'algorithme de Louvain sur le graphe de collaboration
+// --------------------------------------------------------------------------
+// A. Création du graphe projeté en mémoire (nécessite GDS)
+// CALL gds.graph.project(
+//   'collaborationGraph',
+//   'Author',
+//   { WROTE: { type: 'WROTE', orientation: 'UNDIRECTED' } }
+// );
+// 
+// B. Exécution de l'algorithme de Louvain
+// CALL gds.louvain.stream('collaborationGraph')
+// YIELD nodeId, communityId
+// RETURN gds.util.asNode(nodeId).name AS author, communityId
+// ORDER BY communityId ASC
+// LIMIT 50;

@@ -104,12 +104,49 @@ class GraphLoader:
                 count += 1
         logger.info(f"✅ Loaded {count} Subject nodes + HAS_SUBJECT relationships.")
 
+    def load_citations(self, citations_data: list[dict]):
+        """MERGE CITES relationships between Article nodes."""
+        if not citations_data:
+            return
+            
+        cypher = """
+        MATCH (a1:Article {id: $source_id})
+        MATCH (a2:Article {id: $target_id})
+        MERGE (a1)-[:CITES]->(a2)
+        """
+        update_count_cypher = """
+        MATCH (a:Article)<-[:CITES]-()
+        WITH a, count(*) AS citations
+        SET a.citation_count = citations
+        """
+        
+        count = 0
+        for data in tqdm(citations_data, desc="🔗 Loading citations", unit="article"):
+            source_id = data["source_arxiv_id"]
+            for target_id in data.get("cites", []):
+                # We only create relationship if both nodes exist (handled by MATCH).
+                self._run(
+                    cypher,
+                    parameters={
+                        "source_id": source_id,
+                        "target_id": target_id,
+                    },
+                )
+                count += 1
+                
+        # Update citation counts on all nodes
+        self._run(update_count_cypher)
+        
+        logger.info(f"✅ Loaded {count} CITES relationships and updated citation counts.")
+
     # ── Orchestrator ──────────────────────────────────────────────────────────
-    def load_all(self, data: list[dict]):
+    def load_all(self, data: list[dict], citations_data: list[dict] = None):
         """Run full graph loading pipeline in the correct order."""
         logger.info(f"🚀 Loading {len(data)} articles into Neo4j…")
         self.create_constraints()
         self.load_articles(data)
         self.load_authors(data)
         self.load_subjects(data)
+        if citations_data:
+            self.load_citations(citations_data)
         logger.info("✅ Graph loading complete!")
